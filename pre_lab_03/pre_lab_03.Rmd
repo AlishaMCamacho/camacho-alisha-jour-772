@@ -357,4 +357,4 @@ cleaned_md_grants_loans |>
   summarize(total_amount = sum(amount)) |> 
   arrange(desc(total_amount))
 
-```
+```sum
