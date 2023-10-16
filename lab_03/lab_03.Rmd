@@ -55,6 +55,16 @@ HINT: you should use filter() just once, and inside your filter you want to look
 
 When you have found as many as possible, save the result to a new dataframe called `pg_schools`. How many records did you find? 
 
+```{r}
+cleaned_payments |> 
+  group_by(vendor_name) |> 
+  summarise(entries = n()) |> 
+  filter(str_detect(vendor_name, "PRINCE|COUNTY|SCHOOL")) |> 
+  filter(str_detect(vendor_name,"P|G"))
+
+  cleaned_payments  
+```
+
 
 ###
 
@@ -92,33 +102,7 @@ $43,4132
    str_detect(grantee_caps, "PRINCE GEORGE") 
   ) 
 
-###
-
-#  filter(`Zip Code`>=20607 & 'Zip Code' <= 20799)
-  
-###   
-   # str_detect(grantee_caps, "PRINCE GEORGE COUNTY SCHOOLS") 
-  #   str_detect(grantee_caps, "PG COUNTY PUBLIC SCHOOLS") 
-  #  str_detect(grantee_caps, "PRINCE GEORGE'S PUBLIC SCHOOLS") 
-  #  str_detect(grantee_caps, "PRINCE GEORGE'S COUNTY SCHOOLS") 
-  # str_detect(grantee_caps, "PG")
-#  select(grantee_caps)
-  
-###
-
-#  pg_schools <- payments  |> 
-#  filter(str_detect('Vendor Name', "SCHOOL")
-#  )
- 
-
-# str_detect(`Vendor Name`, "PRINCE GEORGE'S COUNTY")) |> 
-#  select('Vendor Name')
-#  filter(str_detect(`Vendor Name`, "PRINCE GEORGE'S COUNTY"),
-#  filter(str_detect( 'Vendor Name', "SCHOOL")) |> 
-# filter(`Vendor Name`=="TRAINSHED LLC" | 'Vendor Name' == "PRINCE GEORGE'S COUNTY SCHOOL")
-#  filter(`Vendor Name`=="PRINCE")
-#  select(`Vendor Name') |> 
-#  arrange(desc('Vendor Name')
+pg_schools2
 
 ```
 

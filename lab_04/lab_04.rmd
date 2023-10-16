@@ -61,6 +61,7 @@ maryland_election_expenses
 
 ## Answer questions
 
+
 **Q1.** You've been assigned to write about Maryland political committees' use of Facebook advertising. There's a category column in the data that has values for different kinds of spending. One of them is "Media". You'll need to complete the following steps:
 
 1. Create a dataframe of Media expenses where the name of the payee is not NA.
@@ -77,6 +78,22 @@ select("expense_upper", "payee_upper") |>
   filter(expense_upper =='MEDIA' & payee_upper != "NA") |> 
  media_expenses <- write_csv("data/media_expenses.csv")" 
  
+
+```{r}
+#Create a dataframe of Media expenses where the name of the payee is not NA.
+#IN CLASS
+
+media_expenses <- maryland_election_expenses |> 
+  filter(expense_category == "Media") |> 
+  #filter(payee_name !="NA") |> 
+  filter(!is.na(payee_name)) |> 
+  #group_by(payee_name) |> 
+  #summarise(count = n()) 
+  mutate(payee_clean = payee_name)
+
+media_expenses
+``` 
+
 
 ```{r}
 #Create a dataframe of Media expenses where the name of the payee is not NA.
@@ -154,7 +171,7 @@ Shuman Eve T. Friends of
 
 Write some sentences answering those questions, then go the Facebook ad library and look for ads from the top spender. *What do you notice about the the information provided about those ads?*
 
-All ads for Jan for Gov, paid by Friends of Ashwani Jain, were removed: "This content was removed because the disclaimer didn't followour policy or ads about social issues, elections or politics."
+All ads for Jan for Gov, paid by Friends of Ashwani Jain, were removed: "This content was removed because the disclaimer didn't follow policy or ads about social issues, elections or politics." 
 
 ([https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&sort_data\\[direction\\]=desc&sort_data\\[mode\\]=relevancy_monthly_grouped&media_type=all](https://www.facebook.com/ads/library/?active_status=all&ad_type=political_and_issue_ads&country=US&sort_data\%5Bdirection\%5D=desc&sort_data\%5Bmode\%5D=relevancy_monthly_grouped&media_type=all){.uri}) 
 
@@ -222,9 +239,13 @@ media_expenses |>
 media_expenses |> 
   select(committee_name, payee_name, amount)  |>
   filter(
-    committee_name == 'Moore Wes For Maryland' |
+    committee_name == 'Moore  Wes For Maryland' |
     committee_name == 'Moore Miller For Maryland Slate'
-  ) #|> 
+  ) |>
+  group_by(payee_name) |> 
+  summarise(total=sum(amount)) |> 
+  arrange(desc(total))
+
  # mutate(Moore_Miller = TRUE)
   
  # filter(committee_name == 'Moore Wes For Maryland' | committee_name == 'Moore Miller For Maryland Slate' )
@@ -236,6 +257,22 @@ media_expenses |>
 **A4.** 
 
 ```{r}
+media_expenses_clean #|> 
+  #group_by(expense_purpose) |> 
+  #summarise(count = n())
+  mutuate(expense_purpose_upper = (str_to_upper(expense_purpose)))
+  #filter(expense_purpose == "Online Advertising") |> 
+  #group_by(committee_name) |> 
+  #summarise(total_amount = amount)
+
+  glimpse(media_expenses)
+  distinct_spelling
+  
+  summarise(
+    distinct_spelling = n_distinct(payee_name),
+    distinct(spellings = paste0(unique(payee_name), collapse = ""))
+  )
+
 ```
 
 **Q5** Your editor asks you to summarize your findings about spending on Facebook by Maryland political candidates. How much do we know and what don't we know? What's the best story idea you've found here?
