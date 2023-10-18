@@ -63,6 +63,8 @@ clean_names() |>
   rename(datez = x1, time = x2, case_number = x3, EVTYP = x4, location = x5) |> 
   mutate(datez = mdy(datez))
 
+OD_Log_Baltimore |> 
+
 OD_Log_Baltimore
 
 ```
@@ -81,9 +83,9 @@ July 14 and September 4th both had the most overdose calls in the dataset at 23 
 
 
 
-OD_Log_Baltimore_count <- OD_Log_Baltimore %>% 
-  filter(year(datez) == 2022) |> 
-  group_by(datez) 
+OD_Log_Baltimore_count <- OD_Log_Baltimore #%>% 
+ # filter(year(datez) == 2022) |> 
+ # group_by(datez) 
   
   #group_by(dates) |> 
   #summarise(n = n()) |>
@@ -91,9 +93,9 @@ OD_Log_Baltimore_count <- OD_Log_Baltimore %>%
   #count(dates = "2023") |> 
   #arrange(desc(dates))
 
-str(OD_Log_Baltimore_count)
+#str(OD_Log_Baltimore_count)
 
-OD_Log_Baltimore_count
+#OD_Log_Baltimore_count
 
 
 ```
