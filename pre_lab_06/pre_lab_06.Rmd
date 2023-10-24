@@ -55,6 +55,7 @@ glimpse(county_voters_2022)
 # bind_rows with list
 county_voters_combined <- bind_rows(list(county_voters_2016, county_voters_2018, county_voters_2020, county_voters_2022))
 View(county_voters_combined)
+
 ```
 
 ### Task 4: Asking a question
