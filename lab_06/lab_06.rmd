@@ -224,8 +224,9 @@ baltimore_911_demographics_18 <- baltimore_911_demographics |>
   mutate(population = ((population/1000)*100)) |> 
   arrange(desc(population)) 
 
-```
+baltimore_911_demographics_18
 
+```
 
 
 ```{r}
@@ -261,9 +262,9 @@ Answer: Zip code 21217 has the most calls, with a breakdown of: 70% renters, 27.
 
 baltimore_911_demographics |> 
   select(call_number, zip_code, pct_homeowner, pct_nomort, pct_rent) |> 
-  group_by(zip_code) |> 
-  summarise(call_number= n()) |> 
-  arrange(call_number)
+  group_by(zip_code)|> 
+ summarise(call_number= n()) |> 
+ arrange(call_number)
 
 ```
 
@@ -275,4 +276,5 @@ baltimore_911_demographics |>
   filter(zip_code == '21228')
 
 ```
+
 
