@@ -85,7 +85,9 @@ As you can see, we have a GEOID, NAME, then variable and value. Variable and val
 **Task** Run the following codeblock to rename the population total columns in each dataframe:
 
 ```{r}
-p10 |> select(GEOID, NAME, value) |> rename(Population2010=value) -> p10
+p10 <- p10 |> 
+  select(GEOID, NAME, value) |> 
+  rename(Population2010=value)
 
 p00 |> select(GEOID, NAME, value) |> rename(Population2000=value) -> p00
 ```
@@ -106,7 +108,9 @@ And now we calculate the percent change.
 Nevada
 
 ```{r}
-alldata |> mutate(change = ((Population2010-Population2000)/Population2000)*100) |> arrange(desc(change))
+alldata |> 
+  mutate(change = ((Population2010-Population2000)/Population2000)*100) |> 
+  arrange(desc(change))
 ```
 
 You may be asking: hey, wasn't there a 2020 Census? Where's that data? The answer is that it's coming - the Census Bureau has a [schedule of releases](https://www.census.gov/programs-surveys/popest/about/schedule.html). There are some variables available:
