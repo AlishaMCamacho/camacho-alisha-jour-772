@@ -29,6 +29,7 @@ library(tidycensus)
 library(refinr)
 library(lubridate)
 library(janitor)
+rm(list = ls())
 
 ```
 
@@ -59,7 +60,9 @@ You'll also need to load the list of American Community Survey variables from th
 
 ```{r}
 
-acs_variables_2021 <- load_variables(2021, "acs5", cache = TRUE)
+acs_variables_2021 <- load_variables(2021, "acs5", cache = TRUE) |> 
+  mutate(label = str_to_lower(label),
+         concept = str_to_lower(concept))
 
 glimpse(acs_variables_2021)
 
@@ -70,30 +73,62 @@ glimpse(acs_variables_2021)
 **Q1** What is the Maryland jurisdiction with the lowest median age, according to the ACS 2021 5-year estimates? You will need to find the variable for median age first. 
 
 
-**A1** 
+**Q1.1** Find variable for median age
+
+**A1.1**
+
+*B01002_001 = variable*
+label = estimate!!median age --!!total: 
+concept = median age by sex
+geog = block
+
+
+```{r}
+
+#filter label column by median and age
+
+acs_variables_2021_median_age_results <- acs_variables_2021 |> 
+  filter(
+    str_detect(label, "median"),
+    str_detect(label, "age"),
+  )
+
+```
+
+
+```{r}
+
+#filter concept column to remove "alone" 
+acs_variables_2021_median_age_results |> 
+  filter(
+    !str_detect(concept, "alone"),
+  )
+
+#B01002_001 is the variable (I think)
+
+```
+
+**Q1.2** What is the Maryland jurisdiction with the lowest median age, according to the ACS 2021 5-year estimates? 
+
+**A1.2**
 
 Baltimore city
 
 ```{r}
+#AC Question: why are we calling the county in geography/why doesn't this work when we call "block" instead? Esp since "block"  is the geog type given to the variable "B01002_001"
 
 md <- get_acs(geography ="county",
-              variables = c(median_age = "B07402_001"),
+              variables = c(median_age = "B01002_001"),
               state = "MD",
-              year = 2021)
+              year = 2021) |> 
+  arrange(estimate + moe)
 
-```
-
-```{r}
-md |> 
-  clean_names() |>
-  arrange(estimate)
+md
 
 ```
 
 
 **Q2** Which Maryland counties have a median age of at least 50? You can use the dataframe you just made to answer this, but you must write code to display only those counties with a median age of at least 50. 
-
-Talbot County and Worcester County
 
 **A2** 
 
@@ -104,7 +139,7 @@ Talbot County and Worcester County
 
 md |> 
   clean_names() |>
-  filter(estimate >= "50") |> 
+  filter(estimate >= ("50")) |> 
 arrange(estimate)
 
 ```
@@ -114,62 +149,136 @@ arrange(estimate)
 To do this, you'll need to:
 
 1. Load the Montgomery County 911 overdose calls data.
+
+```{r}
+montgomery_od_2022 <- read_csv('/Users/AlishaCamacho/Documents/GitHub/camacho-alisha-jour-772/lab_07/data/montgomery_2022_overdoses.csv')
+```
+
 2. Create a new dataframe with the total number of calls for each zip code.
 
 ```{r}
+#clean data first
 
-montgomery_od_2022 <- read_csv('/Users/AlishaCamacho/Documents/GitHub/camacho-alisha-jour-772/lab_07/data/montgomery_2022_overdoses.csv')
-
-montgomery_od_2022_zip <- montgomery_od_2022 |> 
-  group_by(zip) |> 
-  summarise(count = n)
+montgomery_calls <- montgomery_od_2022 |> 
+  clean_names() |> 
+  select(city, state, zip, incident_id) |> 
+  mutate(city = str_to_lower(city)) |> 
+  mutate(state = str_to_lower(state)) |> 
+  mutate(zip = as.character(zip) |> trimws())
+  
+  montgomery_calls
 
 ```
+
+```{r}
+
+#calls for each zip 
+
+montgomery_calls_zip <- montgomery_calls |> 
+  group_by(zip) |>
+  mutate(count = n()) |>
+  summarise(calls = sum(count)) |> 
+  arrange(calls)
+
+montgomery_calls_zip
+
+```
+
+
 3. Find the ACS variable pertaining to the total 18 and up population (there are several choices here; you want the simplest one).
 
+#answer to part 3: 
+ variable = B09021_001
+ label = estimate!!total:
+ concept = living arrangements of adults 18 years and over by age
+
+
 ```{r}
-acs_variables_2021_county <- acs_variables_2021 |> 
-  filter(geography == "county") 
+#filter by label
 
-md_age <- get_acs(geography = "county",
-              variables = c("B07401_004", "B07401_005", "B07401_006", "B07401_007", "B07401_008", "B07401_009", "B07401_010", "B07401_011", "B07401_012", "B07401_013", "B07401_014", "B07401_015", "B07401_016"),
-              state = "MD",
-              year = 2021)
-md_age
-
+acs_variables_2021_label <- acs_variables_2021 |> 
+  filter(!str_detect(label, "under 5 years|5 to 9 years|10 to 14 years|15 to 17 years|18 to 19 years|20 to 24 years|25 to 29 years|30 to 34 years|18 and 19 years|35 to 44 years|45 to 54 years|55 to 64 years|65 to 74 years|75 to 84 years|85 years and older|male|female|sex|race|american indian|black|white|asian|median age|native|hispanic or latino|americas|asia"))
+   
+acs_variables_2021_label
 
 ```
 
-acs_variables_2021
-
-B0921_001
-B16003_008 = adriana's code
-
 ```{r}
+#filter by concept 
+#continue search for total 18+ population
 
-acs_variables_2021  |> 
-  filter(str_detect (label = c(
-    "living arrangements of adults"))) |> 
-  filter(!str_detect(concept =C(
-    "CITIZENSHIP", "WHITE ALONE")
-  ))
-acs_variables_2021
+acs_variabels_2021_label_concept <- acs_variables_2021_label |> 
+  filter(!str_detect(concept, "alone|two or more races|hispanic or latino|sex|puerto rico|6 to 17 years|place of birth|geographical mobility|means of transportation to work|first marriage|a birth|language spoken at home|poverty|disability|income|employment|work|room|mortgage|tenure|female|industry|median age|insurance|occupation|ancestry|under 18|children|citizenship status|citizen|naturalization|nativity|movers|vehicles"))
+
+acs_variabels_2021_label_concept
+
+#B09021_001
+#label = estimate!!total:
+#concept = living arrangements of adults 18 years and over by age
+#geography = block group
 
 ```
 
 
 4. Get from the ACS data from all Maryland zip codes using that variable.
 
-inner_join(calls_by_zip)
+```{r}
 
-20877 = answer
-
-select(-c())
-
-#remove "state"
-
+md_pop_over_18 <- get_acs(
+        geography = "block group",
+        variables = "B09021_001",
+        state = "MD",
+        year = 2021)
+md_pop_over_18
+```
 
 5. Join the ACS data to the Montgomery County zip code totals dataframe and rename the estimate column to a meaningful name you've given the ACS variable.
+
+```{r}
+
+#ACS data frame = md_pop_over_18
+#Montgomery County zip code data frame = montgomery_calls_zip
+#clean md_pop_over_18 data frame
+
+adult_pop_md <- md_pop_over_18 |> 
+  clean_names() |> 
+  mutate(zip = str_sub(geoid, 1, 6)) |>
+  rename(pop_count = estimate) |> 
+  mutate(name = str_to_lower(name)) 
+
+adult_pop_md
+#montgomery_calls_zip
+
+```
+
+#reposting question 
+
+**Q3** We're interested in knowing more about Montgomery County zip codes where overdose calls are coming from and the demographic characteristics they possess. In particular, we want to calculate a rate of calls per 1,000 population. 
+*noting that the Q later specifies we are interested in the adult population only 
+
+#Join dataframes
+adult_pop_md
+montgomery_calls_zip
+
+
+#I am at a loss with what I am doing wrong, as I keep getting zero results. Here is one of the many chats i've had with chat gpt on this one: https://chat.openai.com/share/c063b620-4ced-4b18-8f9c-9313e5cedfee
+
+```{r}
+
+adult_pop_md  |>  
+  inner_join(montgomery_calls_zip)
+
+```
+
+
+```{r}
+#montgomery_calls_adult_pop <- inner_join(montgomery_calls_zip, adult_pop_md, by = "zip")
+
+#non_matching_rows <- anti_join(montgomery_calls_zip, adult_pop_md, by = "zip")
+
+```
+
+
 6. Add a column to the joined dataframe that calculates a rate of calls per 1,000 population.
 
 Which zip code has the highest rate of calls? Which has the lowest?
@@ -199,5 +308,8 @@ Which zip code has the highest rate of calls? Which has the lowest?
 ```{r}
 
 
+
 ```
+
+rm(list = ls())
 
