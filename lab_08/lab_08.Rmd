@@ -1,0 +1,370 @@
+---
+title: "lab_08"
+author: "derek willis"
+date: "2023-04-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries and establish settings
+
+**Task** Create a codeblock and load appropriate packages and settings for this lab. We'll be making some charts, working with dates and retrieving Census data.
+
+
+```{r}
+library(tidyverse)
+library(refinr)
+library(janitor)
+library(lubridate)
+library(tidycensus)
+
+```
+
+
+## Load and modify data
+
+**Task** Create a codeblock and load the following data from the data folder:
+
+* Prince George's County 911 Overdose Calls
+
+You will need to create columns for the date, week and month based on the existing `datetime` column.
+
+```{r}
+
+pg_od <- read_csv("/Users/AlishaCamacho/Documents/GitHub/camacho-alisha-jour-772/lab_08/data/prince_georges_2022_overdoses.csv")
+```
+**cleaning and adding columns for date, week, and month**
+
+#disclaimer, I used Chat GPT to support this adventure of figuring out how to fix the two rows that weren't formatted correctly: https://chat.openai.com/share/77b79f98-027e-472a-bf44-06abd8b52c4b
+
+```{r}
+#**find problem rows**
+# attempt 1 to clean dataframe
+
+#prob_rows <- pg_od[is.na(ymd_hms(pg_od$datetime)), ] |> 
+ # mutate(date2 = ymd(datetime)) |> 
+ # select(-datetime)
+ #rename(date2 = datetime_2) |> 
+ # mutate(week = week(date)) |> 
+ # mutate(month = month.name[month(date)])
+#prob_rows
+
+
+```
+
+
+```{r}
+
+#remove problem rows for pg_od and create new dataframe pg_od_2
+
+values_to_remove <- c("PF22012100000001", "PF22122100000001")
+
+pg_od_2 <- pg_od |> filter(!incident %in% values_to_remove)
+
+pg_od_2
+
+```
+
+
+```{r}
+##plug in updated dataframe, "pg_od_2, which removed the two problem rows 
+
+#pg_od_date <- pg_od |> 
+
+pg_od_date <- pg_od_2 |> 
+  mutate(date = as.Date(ymd_hms(datetime))) |> 
+  mutate(week = (week(datetime))) |> 
+  mutate(month = month.name[month(datetime)]) |> 
+  mutate(type = str_to_lower(type)) |> 
+  mutate(category = str_to_lower(category)) |> 
+  select(-datetime)
+
+pg_od_date
+```
+
+#create custom data frame, prob_rows, with the 2 rows and clean
+
+```{r}
+
+#**Attempt 2: create dataframe**
+
+prob_rows2 <- data.frame(
+  incident = c("PF22012100000001", "PF22122100000001"), 
+  category = c("bls", "bls"),
+  type = c("overdose", "overdose"),
+  zipcode = c("20745", "20746"), 
+  
+  date = c("2022-01-21", "2022-12-21")
+)
+
+prob_rows2<- prob_rows2 |> 
+  mutate(date = ymd(date)) |> 
+  mutate(week =  week(date)) |> 
+  mutate(month = month.name[month(date)])
+
+```
+
+
+#join dataframes
+
+```{r}
+
+pg_od_clean <- rbind(pg_od_date, prob_rows2) |> 
+  
+
+pg_od_clean
+
+
+```
+
+## Questions 
+
+**Q1.1** Which month saw the greatest percentage of total calls? Create a dataframe that calculates the percentage of all calls that each month's calls represents. 
+
+
+**A1.1** 
+December saw the greatest percentage of total calls. 
+
+#disclaimer: I used chatgpt ... again ... 
+https://chat.openai.com/share/60884fb5-9e6a-4bff-9d21-0a85aa313e20
+
+
+```{r}
+
+pg_calls_by_month<- pg_od_clean |> 
+  mutate(month_abbrev = month.abb[match(month, month.name)]) |> 
+  group_by(month_abbrev) |> 
+  summarise(total_calls = n()) |> 
+  ungroup() |> 
+  mutate(percent_of_total_calls = total_calls/sum(total_calls)*100) |>
+  arrange(desc(percent_of_total_calls))
+
+pg_calls_by_month
+
+```
+
+
+**Q1.2**
+
+Make a bar chart from that dataframe. Your bar chart must have:
+
+* A clear title that states the main idea/finding
+* Good labels for the x & y axis and a caption for the source, which is Prince George's County EMS.
+* Readable bars - the values shouldn't be overlapping
+
+Compare the results here to those from the pre_lab_08 bar chart - are there major differences in the months with the highest and lowest figures? Describe that below.
+
+**A1.2**
+I am not noticing an obvious trend. I'd be curious if OD calls dropped in Jan of 2023, and spiked in December 2022, because that would be interesting. 
+
+When comparing the two charts, both charts include Feb and Jan in the bottom four months, but none in the top four. 
+
+```{r}
+
+pg_calls_by_month |> 
+  ggplot() +
+  geom_bar(aes(x=reorder(month_abbrev, total_calls), weight=total_calls)) +
+  #theme_minimal()
+  theme_light() +
+  labs(
+    title= "2022 Overdose Calls in Prince George's County",
+    x = "month",
+    y = "total calls",
+    caption = "Source: Prince George's County EMS"
+  )
+  
+
+```
+
+
+**Q2.** Let's visualize this data on a weekly basis using a line chart. As in Q1, generate a dataframe with the total number of calls for each week, and then create a line chart to show the distribution of calls over time. Your line chart must have:
+
+* A clear title that states the main idea/finding
+* Good labels for the x & y axis and a caption for the source, which is Prince George's County EMS.
+* Readable labels
+
+Describe the pattern of results; you may want to look at the data to dig into particular outliers.
+
+**A2.** 
+
+
+The fewest number calls occurred on week 53, or more specifically, December 31st. Four calls on NYE seems extremely low. My guess is that the calls were logged on Jan 1st instead, but I'd want to see the information for that day first. 
+
+I'd be curious to learn why calls spiked the week of July 10th. Week 51 would be around the time winter finals are wrapping up, people are going on winter break and gearing up for the holidays. 
+
+
+
+#create dataframe for calls by week
+
+```{r}
+
+pg_calls_by_week<- pg_od_clean |> 
+  group_by(week) |> 
+  summarise(total_calls = n()) |> 
+  ungroup() |> 
+  mutate(percent_of_total_calls = total_calls/sum(total_calls)*100) |>
+  arrange(desc(week))
+
+pg_calls_by_week
+
+```
+
+#create line chart
+
+```{r}
+
+pg_calls_by_week |> 
+  ggplot() +
+  geom_line(aes(x= week, y = total_calls)) +
+  scale_x_continuous(breaks = seq(1, max(pg_calls_by_week$week), by = 2)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(
+    title = "2022 Overdose Calls in Prince George's County", 
+    x = "week",
+    y = "total calls",
+    caption = "Source: Prince George's County EMS"
+  )
+
+```
+
+#whats going on for week 53
+```{r}
+
+pg_od_clean |> 
+ # filter(week == 53)
+  filter(week == 28)
+  #filter(week == 51)
+
+```
+
+
+**Q3.**  A scatterplot is a type of chart that helps us see relationships between two variables. One variable goes on the x axis, the other on the y axis.  For each row/observation in our data, a scatterplot puts a circle (or a "point") where the two variables intersect on a grid. 
+
+Statisticians use scatterplots to show graphically whether one variable is correlated -- related, in a statistical sense -- with another variable.  A classic example is the [relationship between ice cream sales and temperature](https://www.mathsisfun.com/data/scatter-xy-plots.html). The scatterplot below -- press play to load the image -- shows that relationship, that an increase in temperature is associated with an increase in ice cream sales. When it's 12C, sales are 200 dollars, and when it's hotter, 25C, sales are 600 dollars.
+
+```{r}
+knitr::include_graphics("https://www.mathsisfun.com/data/images/scatter-ice-cream1.svg")
+```
+
+We're going to use a scatterplot a little differently, to get a visual sense of two key variables: 
+
+Our question is: does the median income in a zip code have any relationship to the number of overdose 911 calls in that zip code?
+
+To answer this question, do the following:
+
+1. Generate a dataframe with the number of 911 calls for each zip code.
+
+```{r}
+
+pg_od_zip <- pg_od_clean |> 
+  group_by(zipcode) |> 
+  summarise(count = n())
+
+pg_od_zip
+
+
+```
+
+2. Get data from the Census Bureau showing median household income for Maryland zip codes.
+
+#get api key
+```{r}
+
+census_api_key("a0c53f3750a5b78a93b8b40993886ff655a3d0fd")
+```
+
+#I am using ACS instead of the census. not sure whether this is okay
+#I tried to add the sum of estimate + moe. Emphasis on the word tried 
+
+```{r}
+
+md_income_data <- get_acs(geography = "tract",
+              variables = c(medincome = "B19013_001"),
+              state = "MD",
+              year = 2021) 
+
+md_income_data <- md_income_data |> 
+    mutate(zipcode = substr(GEOID, 1, 6))
+
+md_income_data
+
+```
+
+
+3. Join those two dataframes on their zip code columns, starting with the 911 calls dataframe.
+
+#I am getting zero rows and I am not sure why. I'm sharing the conversations with Chat GPT for reference
+https://chat.openai.com/share/3369cff5-680b-4e63-862f-25bf343c0a7f
+https://chat.openai.com/share/80b7db22-4292-4b27-9b04-27bff8385e2a
+
+#maybe I figured it out after all? 
+
+```{r}
+ data_join <- pg_od_clean |> 
+ right_join(md_income_data, by = "zipcode")
+
+data_join
+
+```
+
+
+4. Make a scatterplot showing the total calls and median income. I didn't show you how to do this, so look it up! Googling "ggplot scatterplot" is a good start.
+
+
+```{r}
+data_join |> 
+  group_by(zipcode) |> 
+  summarise(count = n())
+
+data_join
+
+```
+
+
+ggplot(data = your_data_frame, aes(x = x_variable, y = y_variable)) +
+  geom_point()
+
+```{r}
+pg_calls_by_median_income |> 
+  ggplot() +
+  geom_point(aes((x = estimate, y = )))
+
+
+```
+
+
+```{r}
+pg_calls_by_median_income |> 
+  ggplot() +
+  
+  
+  geom_line(aes(x= week, y = total_calls)) +
+  scale_x_continuous(breaks = seq(1, max(pg_calls_by_week$week), by = 2)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(
+    title = "2022 Overdose Calls in Prince George's County", 
+    x = "week",
+    y = "total calls",
+    caption = "Source: Prince George's County EMS"
+  )
+
+
+```
+
+
+5. Give it an appropriate title, source, and x and y axis titles.
+6. Add a label for each point that shows the zip code using geom_text() - see some examples of its use at https://ggplot2.tidyverse.org/reference/geom_text.html#ref-examples. Try to make the names as easy to read as possible by avoiding overlap.
+
+
+7. In the answer space below, describe what you see and answer the questions posed above. In a general sense, what do you think this means? Feel free to consider the actual raw values: how would you report out the main point(s) of this chart?
+
+**A3.**  
+
+```{r}
+
+
+
+```
