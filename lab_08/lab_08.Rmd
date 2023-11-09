@@ -36,6 +36,26 @@ You will need to create columns for the date, week and month based on the existi
 
 pg_od <- read_csv("/Users/AlishaCamacho/Documents/GitHub/camacho-alisha-jour-772/lab_08/data/prince_georges_2022_overdoses.csv")
 ```
+
+```{r}
+
+pg_od_class <- read_csv("/Users/AlishaCamacho/Documents/GitHub/camacho-alisha-jour-772/lab_08/data/prince_georges_2022_overdoses.csv")
+
+
+```
+
+
+```{r}
+#inclass
+
+pg_od_class |> 
+  mutate(date = date(datetime),
+         month = month(date),
+         week = week(date))
+
+```
+
+
 **cleaning and adding columns for date, week, and month**
 
 #disclaimer, I used Chat GPT to support this adventure of figuring out how to fix the two rows that weren't formatted correctly: https://chat.openai.com/share/77b79f98-027e-472a-bf44-06abd8b52c4b
@@ -133,16 +153,28 @@ https://chat.openai.com/share/60884fb5-9e6a-4bff-9d21-0a85aa313e20
 
 
 ```{r}
+#in class code
+group_by(month) |> 
+  summarise(count = n()) |> 
+  mutate(percent = (count/sum(count))*100)
 
-pg_calls_by_month<- pg_od_clean |> 
-  mutate(month_abbrev = month.abb[match(month, month.name)]) |> 
-  group_by(month_abbrev) |> 
-  summarise(total_calls = n()) |> 
-  ungroup() |> 
-  mutate(percent_of_total_calls = total_calls/sum(total_calls)*100) |>
-  arrange(desc(percent_of_total_calls))
 
-pg_calls_by_month
+```
+
+
+
+```{r}
+
+#**AC code below
+#pg_calls_by_month<- pg_od_clean |> 
+#  mutate(month_abbrev = month.abb[match(month, month.name)]) |> 
+ # group_by(month_abbrev) |> 
+  #summarise(total_calls = n()) |> 
+  #ungroup() |> 
+  #mutate(percent_of_total_calls = total_calls/sum(total_calls)*100) |>
+  #arrange(desc(percent_of_total_calls))
+
+#pg_calls_by_month
 
 ```
 
@@ -190,14 +222,18 @@ Describe the pattern of results; you may want to look at the data to dig into pa
 
 **A2.** 
 
-
 The fewest number calls occurred on week 53, or more specifically, December 31st. Four calls on NYE seems extremely low. My guess is that the calls were logged on Jan 1st instead, but I'd want to see the information for that day first. 
 
 I'd be curious to learn why calls spiked the week of July 10th. Week 51 would be around the time winter finals are wrapping up, people are going on winter break and gearing up for the holidays. 
 
 
-
 #create dataframe for calls by week
+
+
+#inclass code
+group_by(week) |> 
+summarise(count = n()) |> 
+mutate(percent = (count/sum(count))*100)
 
 ```{r}
 
@@ -281,11 +317,16 @@ census_api_key("a0c53f3750a5b78a93b8b40993886ff655a3d0fd")
 
 ```{r}
 
-md_income_data <- get_acs(geography = "tract",
-              variables = c(medincome = "B19013_001"),
-              state = "MD",
-              year = 2021) 
+#try zcta next; zipcode as opposed to tract
+#remove state
 
+md_income_data <- get_acs(geography = "zcta",
+              variables = c(medincome = "B19013_001"),
+             # state = "MD",
+              year = 2021) 
+md_income_data
+```
+```{r}
 md_income_data <- md_income_data |> 
     mutate(zipcode = substr(GEOID, 1, 6))
 
@@ -368,3 +409,18 @@ pg_calls_by_median_income |>
 
 
 ```
+
+#notes from class re correlation 
+#.6 is a better correlation
+
+library(corr)
+
+calls_by_zipcode_with_income |> 
+select(-zipcode) |> 
+correlate() 
+
+cor.test(calls_by_zipcode_with_income$calls, calls_byzipcode_with_... )
+
+
+
+
