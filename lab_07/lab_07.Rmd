@@ -101,7 +101,7 @@ acs_variables_2021_median_age_results <- acs_variables_2021 |>
 #filter concept column to remove "alone" 
 acs_variables_2021_median_age_results |> 
   filter(
-    !str_detect(concept, "alone"),
+    !str_detect(concept, "alone")
   )
 
 #B01002_001 is the variable (I think)
@@ -125,6 +125,7 @@ md <- get_acs(geography ="county",
 
 md
 
+```
 ```
 
 
